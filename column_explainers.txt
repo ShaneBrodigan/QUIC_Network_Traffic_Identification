@@ -1,0 +1,38 @@
+  Network identifiers
+  - ID — unique flow ID
+  - SRC_IP / DST_IP — source/destination IP addresses
+  - DST_ASN — destination Autonomous System Number (identifies the network/organisation, e.g. 13335 = Cloudflare)
+  - SRC_PORT / DST_PORT — ports (DST_PORT is usually 443 for QUIC)
+  - PROTOCOL — transport protocol (17 = UDP, which QUIC runs over)
+
+  QUIC-specific
+  - QUIC_VERSION — QUIC protocol version number
+  - QUIC_SNI — Server Name Indication — the domain being connected to (e.g. status.discord.com)
+  - QUIC_USERAGENT — user agent string from the QUIC handshake (often NaN)
+
+  Timing
+  - TIME_FIRST / TIME_LAST — timestamps of first and last packet
+  - DURATION — flow duration in seconds
+
+  Volume
+  - BYTES / BYTES_REV — bytes sent in each direction
+  - PACKETS / PACKETS_REV — packet counts in each direction
+
+  Packet-level features
+  - PPI_LEN — number of packets in the Per-Packet Information sequence
+  - PPI_DURATION — duration covered by PPI
+  - PPI_ROUNDTRIPS — estimated round trips
+  - PPI — the full PPI sequence (a list of per-packet features — direction, size, inter-arrival time etc.)
+
+  Histograms
+  - PHIST_SRC_SIZES / PHIST_DST_SIZES — histogram of packet sizes in each direction (8 bins)
+  - PHIST_SRC_IPT / PHIST_DST_IPT — histogram of inter-packet times in each direction (8 bins)
+
+  Flow end reason
+  - FLOW_ENDREASON_IDLE / FLOW_ENDREASON_ACTIVE / FLOW_ENDREASON_OTHER — why the flow was terminated (boolean flags)
+
+  Labels (targets)
+  - APP — the application (e.g. discord, youtube) — fine-grained label
+  - CATEGORY — the application category (e.g. Instant messaging, Video streaming) — coarse label
+
+  APP and CATEGORY are your classification targets. QUIC_SNI is likely to be a very strong feature since it directly identifies the server.
