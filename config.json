@@ -1,0 +1,14 @@
+{
+    "cols_to_drop": [
+        "ID",
+        "SRC_IP",
+        "DST_IP",
+        "DST_ASN",
+        "SRC_PORT",
+        "DST_PORT",
+        "PROTOCOL",
+        "QUIC_VERSION",
+        "QUIC_SNI",
+        "QUIC_USERAGENT"
+    ]
+}

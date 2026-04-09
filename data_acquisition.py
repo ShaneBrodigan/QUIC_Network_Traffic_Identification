@@ -36,9 +36,12 @@ class Data_acquisition:
         dict_of_weeks = {'week_1': [i for i in file_names if "W-2022-44" in i],
                          'week_2': [i for i in file_names if "W-2022-45" in i],
                          'week_3': [i for i in file_names if "W-2022-46" in i],
-                         'week_4': [i for i in file_names if "W-2022-45" in i]}
+                         'week_4': [i for i in file_names if "W-2022-47" in i]}
 
-        dict_of_weeks['week_1'] = [dict_of_weeks['week_1'][0], dict_of_weeks['week_1'][1], dict_of_weeks['week_1'][2]]
+        dict_of_weeks['week_1'] = [dict_of_weeks['week_1'][0]]
+        dict_of_weeks['week_2'] = [dict_of_weeks['week_2'][0]]
+        dict_of_weeks['week_3'] = [dict_of_weeks['week_3'][0]]
+        dict_of_weeks['week_4'] = [dict_of_weeks['week_4'][0]]
 
         return dict_of_weeks
 
@@ -46,10 +49,12 @@ class Data_acquisition:
     def download_datasets(self, weeks_to_download: list[str]) -> None:
         dataset_root = './dataset'
         download_tmp = './dataset_temp'
+        duckdb_root = './duckdb'
         days_of_week = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
 
         for key, value in self.dict_of_weeks.items():
-            os.makedirs(os.path.join(dataset_root, key), exist_ok=True)
+            os.makedirs(os.path.join(dataset_root, key), exist_ok=True) #Makes ./dataset folder
+            os.makedirs(os.path.join(duckdb_root, key), exist_ok=True)  #Makes ./duckdb folder
 
             if key in weeks_to_download:
                 for day_iterator, day_file in enumerate(value):
