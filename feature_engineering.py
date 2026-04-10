@@ -1,6 +1,7 @@
 import ast
 import pandas as pd
 import numpy as np
+from sklearn.preprocessing import LabelEncoder, RobustScaler
 
 class Feature_Engineering():
 
@@ -45,3 +46,35 @@ class Feature_Engineering():
         self.dataframe = self.dataframe.drop(columns=list_cols)
         self.dataframe = pd.concat([self.dataframe, pd.DataFrame(new_cols)], axis=1)
         return self.dataframe
+
+    def perform_encode_and_scaling(self, scalers: dict) -> pd.DataFrame:
+        cols_to_robustscale = [col for col in self.dataframe.columns.tolist() if self.dataframe[col].dtype in ['int64', 'float64']]
+        cols_to_robustscale = [col for col in cols_to_robustscale if
+                               not col.startswith('PPI_DIRS')]  # Removing PPI_DIR cols as they are already -1, 0 or 1
+
+        cols_to_label_encode = [col for col in self.dataframe.columns.tolist() if self.dataframe[col].dtype in ['str']]
+
+        ppi_dir_cols = [col for col in self.dataframe.columns.tolist() if col.startswith('PPI_DIRS')]
+        ppi_dir_df = self.dataframe[ppi_dir_cols]
+
+        bool_cols = [col for col in self.dataframe.columns.tolist() if self.dataframe[col].dtype in ['bool']]
+        bool_df = self.dataframe[bool_cols]
+
+        print('Label Encoding...')
+        encoded_df = self.encode(cols_to_label_encode, scalers['label_encoder'])
+
+        print('Robust Scaling...')
+        scaled_array = scalers['RobustScaler'].fit_transform(self.dataframe[cols_to_robustscale])
+        scaled_df = pd.DataFrame(scaled_array, columns=cols_to_robustscale)
+
+        print('Merging final df')
+        final_df = pd.concat([encoded_df, scaled_df, ppi_dir_df, bool_df], axis=1)
+        return final_df
+
+
+    def encode(self, col_names: list[str], scaler) -> pd.DataFrame:
+        scaled_df = pd.DataFrame()
+        for col in col_names:
+            scaled = scaler.fit_transform(self.dataframe[col])
+            scaled_df[col] = scaled
+        return scaled_df
