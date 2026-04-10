@@ -47,7 +47,7 @@ class Feature_Engineering():
         self.dataframe = pd.concat([self.dataframe, pd.DataFrame(new_cols)], axis=1)
         return self.dataframe
 
-    def perform_encode_and_scaling(self, scalers: dict) -> pd.DataFrame:
+    def perform_encode_and_scaling(self, scalers: dict):
         cols_to_robustscale = [col for col in self.dataframe.columns.tolist() if self.dataframe[col].dtype in ['int64', 'float64']]
         cols_to_robustscale = [col for col in cols_to_robustscale if
                                not col.startswith('PPI_DIRS')]  # Removing PPI_DIR cols as they are already -1, 0 or 1
@@ -69,7 +69,8 @@ class Feature_Engineering():
 
         print('Merging final df')
         final_df = pd.concat([encoded_df, scaled_df, ppi_dir_df, bool_df], axis=1)
-        return final_df
+
+        self.dataframe = final_df
 
 
     def encode(self, col_names: list[str], scaler) -> pd.DataFrame:
@@ -78,3 +79,14 @@ class Feature_Engineering():
             scaled = scaler.fit_transform(self.dataframe[col])
             scaled_df[col] = scaled
         return scaled_df
+
+    def get_tabular_dataset(self) -> pd.DataFrame:
+        return self.dataframe
+
+    def get_ppi_sequential_only(self):
+        ppi_cols = (
+                [f'PPI_TIMES_{i}' for i in range(30)] +
+                [f'PPI_DIRS_{i}' for i in range(30)] +
+                [f'PPI_SIZES_{i}' for i in range(30)]
+        )
+        return self.dataframe[['APP', 'CATEGORY'] + ppi_cols]
