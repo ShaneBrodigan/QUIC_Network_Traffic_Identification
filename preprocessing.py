@@ -27,6 +27,8 @@ def convert_file(csv_file_path: str):
     writer = None
     for chunk in pd.read_csv(csv_file_path, chunksize=100_000, dtype={'QUIC_USERAGENT': 'str'}):
         chunk.drop(columns=[c for c in COLS_TO_DROP if c in chunk.columns], inplace=True)
+        chunk['TIME_FIRST'] = pd.to_datetime(chunk['TIME_FIRST'], format='ISO8601')   # Convert to timedate type for temporal analysis later
+        chunk['TIME_LAST'] = pd.to_datetime(chunk['TIME_LAST'], format='ISO8601')     # Convert to timedate type for temporal analysis later
         table = pa.Table.from_pandas(chunk, preserve_index=False)
         if writer is None:
             writer = pq.ParquetWriter(parquet_path, table.schema)
