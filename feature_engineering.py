@@ -72,6 +72,20 @@ class Feature_Engineering():
 
         self.dataframe = final_df
 
+    def tier_sampling(self, max_samples: int, min_samples: int):
+        sampled = []
+        for app, group in self.dataframe.groupby('APP'):
+            n = len(group)
+            if n < min_samples:
+                continue
+            elif n < max_samples:
+                sampled.append(group.sample(max_samples, replace=True, random_state=42))
+            else:
+                sampled.append(group.sample(max_samples, replace=False, random_state=42))
+
+        self.dataframe = pd.concat(sampled).reset_index(drop=True)
+        return self.dataframe
+
 
     def encode(self, col_names: list[str], scaler) -> pd.DataFrame:
         scaled_df = pd.DataFrame()
