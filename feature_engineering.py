@@ -47,7 +47,7 @@ class Feature_Engineering():
         self.dataframe = pd.concat([self.dataframe, pd.DataFrame(new_cols)], axis=1)
         return self.dataframe
 
-    def perform_encode_and_scaling(self, scalers: dict):
+    def perform_encode_and_scaling(self, scalers: dict, fit: bool):
         cols_to_robustscale = [col for col in self.dataframe.columns.tolist() if self.dataframe[col].dtype in ['int64', 'float64']]
         cols_to_robustscale = [col for col in cols_to_robustscale if
                                not col.startswith('PPI_DIRS')]  # Removing PPI_DIR cols as they are already -1, 0 or 1
@@ -61,10 +61,13 @@ class Feature_Engineering():
         bool_df = self.dataframe[bool_cols]
 
         print('Label Encoding...')
-        encoded_df = self.encode(cols_to_label_encode, scalers['label_encoder'])
+        encoded_df = self.encode(cols_to_label_encode, scalers['label_encoder'], fit)
 
         print('Robust Scaling...')
-        scaled_array = scalers['RobustScaler'].fit_transform(self.dataframe[cols_to_robustscale])
+        if fit:
+            scaled_array = scalers['RobustScaler'].fit_transform(self.dataframe[cols_to_robustscale])
+        else:
+            scaled_array = scalers['RobustScaler'].transform(self.dataframe[cols_to_robustscale])
         scaled_df = pd.DataFrame(scaled_array, columns=cols_to_robustscale)
 
         print('Merging final df')
@@ -72,20 +75,15 @@ class Feature_Engineering():
 
         self.dataframe = final_df
 
-    def encode(self, col_names: list[str], scaler) -> pd.DataFrame:
+    def encode(self, col_names: list[str], label_encoders: list, fit: bool) -> pd.DataFrame:
         scaled_df = pd.DataFrame()
         for col in col_names:
-            scaled = scaler.fit_transform(self.dataframe[col])
-            scaled_df[col] = scaled
+            if fit:
+                label_encoders[col] = LabelEncoder()
+                scaled_df[col] = label_encoders[col].fit_transform(self.dataframe[col])
+            else:
+                scaled_df[col] = label_encoders[col].transform(self.dataframe[col])
         return scaled_df
 
     def get_tabular_dataset(self) -> pd.DataFrame:
         return self.dataframe
-
-    def get_ppi_sequential_only(self):
-        ppi_cols = (
-                [f'PPI_TIMES_{i}' for i in range(30)] +
-                [f'PPI_DIRS_{i}' for i in range(30)] +
-                [f'PPI_SIZES_{i}' for i in range(30)]
-        )
-        return self.dataframe[['APP', 'CATEGORY'] + ppi_cols]
