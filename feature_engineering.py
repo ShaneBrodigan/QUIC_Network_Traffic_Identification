@@ -52,7 +52,7 @@ class Feature_Engineering():
         cols_to_robustscale = [col for col in cols_to_robustscale if
                                not col.startswith('PPI_DIRS')]  # Removing PPI_DIR cols as they are already -1, 0 or 1
 
-        cols_to_label_encode = [col for col in self.dataframe.columns.tolist() if self.dataframe[col].dtype in ['object']]
+        cols_to_label_encode = [col for col in self.dataframe.columns.tolist() if pd.api.types.is_string_dtype(self.dataframe[col])]
 
         ppi_dir_cols = [col for col in self.dataframe.columns.tolist() if col.startswith('PPI_DIRS')]
         ppi_dir_df = self.dataframe[ppi_dir_cols]
