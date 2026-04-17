@@ -38,11 +38,6 @@ class Data_acquisition:
                          'week_3': [i for i in file_names if "W-2022-46" in i],
                          'week_4': [i for i in file_names if "W-2022-47" in i]}
 
-        dict_of_weeks['week_1'] = [dict_of_weeks['week_1'][6]]
-        dict_of_weeks['week_2'] = [dict_of_weeks['week_2'][6]]
-        dict_of_weeks['week_3'] = [dict_of_weeks['week_3'][6]]
-        dict_of_weeks['week_4'] = [dict_of_weeks['week_4'][6]]
-
         return dict_of_weeks
 
     # Downloads datasets from KaggleHub
