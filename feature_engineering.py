@@ -47,11 +47,7 @@ class Feature_Engineering():
         self.dataframe = pd.concat([self.dataframe, pd.DataFrame(new_cols)], axis=1)
         return self.dataframe
 
-    def perform_encode_and_scaling(self, scalers: dict, fit: bool):
-        cols_to_robustscale = [col for col in self.dataframe.columns.tolist() if self.dataframe[col].dtype in ['int64', 'float64']]
-        cols_to_robustscale = [col for col in cols_to_robustscale if
-                               not col.startswith('PPI_DIRS')]  # Removing PPI_DIR cols as they are already -1, 0 or 1
-
+    def perform_encoding(self, scalers: dict, fit: bool):
         cols_to_label_encode = [col for col in self.dataframe.columns.tolist() if pd.api.types.is_string_dtype(self.dataframe[col])]
 
         ppi_dir_cols = [col for col in self.dataframe.columns.tolist() if col.startswith('PPI_DIRS')]
@@ -60,18 +56,16 @@ class Feature_Engineering():
         bool_cols = [col for col in self.dataframe.columns.tolist() if self.dataframe[col].dtype in ['bool']]
         bool_df = self.dataframe[bool_cols]
 
+        numeric_cols = [col for col in self.dataframe.columns.tolist()
+                        if self.dataframe[col].dtype in ['int64', 'float64']
+                        and not col.startswith('PPI_DIRS')]
+        numeric_df = self.dataframe[numeric_cols]
+
         print('Label Encoding...')
         encoded_df = self.encode(cols_to_label_encode, scalers['label_encoder'], fit)
 
-        print('Robust Scaling...')
-        if fit:
-            scaled_array = scalers['RobustScaler'].fit_transform(self.dataframe[cols_to_robustscale])
-        else:
-            scaled_array = scalers['RobustScaler'].transform(self.dataframe[cols_to_robustscale])
-        scaled_df = pd.DataFrame(scaled_array, columns=cols_to_robustscale)
-
         print('Merging final df')
-        final_df = pd.concat([encoded_df, scaled_df, ppi_dir_df, bool_df], axis=1)
+        final_df = pd.concat([encoded_df, numeric_df, ppi_dir_df, bool_df], axis=1)
 
         self.dataframe = final_df
 
@@ -87,3 +81,13 @@ class Feature_Engineering():
 
     def get_tabular_dataset(self) -> pd.DataFrame:
         return self.dataframe
+
+
+def robust_scale(df: pd.DataFrame, scaler: RobustScaler, fit: bool) -> pd.DataFrame:
+    cols = [c for c in df.columns if df[c].dtype in ['int64', 'float64'] and not c.startswith('PPI_DIRS')]
+    df = df.copy()
+    if fit:
+        df[cols] = scaler.fit_transform(df[cols])
+    else:
+        df[cols] = scaler.transform(df[cols])
+    return df
