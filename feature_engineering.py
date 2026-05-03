@@ -82,7 +82,7 @@ class Feature_Engineering():
     def get_tabular_dataset(self) -> pd.DataFrame:
         return self.dataframe
 
-
+"""
 def robust_scale(df: pd.DataFrame, scaler: RobustScaler, fit: bool) -> pd.DataFrame:
     cols = [c for c in df.columns if df[c].dtype in ['int64', 'float64'] and not c.startswith('PPI_DIRS')]
     df = df.copy()
@@ -91,3 +91,4 @@ def robust_scale(df: pd.DataFrame, scaler: RobustScaler, fit: bool) -> pd.DataFr
     else:
         df[cols] = scaler.transform(df[cols])
     return df
+"""
