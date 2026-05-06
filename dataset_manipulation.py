@@ -79,6 +79,66 @@ class DatasetManipulation:
 
         return X_train, X_test
 
+    def impute_handshake_sizes(self, X_train, X_test=None, fit=True):
+        client_positions = [0]
+        server_positions = [1, 2]
+
+        # Handle (n, seq_len, 3) numpy arrays — axis 2 is [time, size, dir]
+        if isinstance(X_train, np.ndarray):
+            if fit:
+                means = {}
+                for i in client_positions:
+                    mask = X_train[:, i, 2] == 1
+                    means[(i, 1)] = float(X_train[mask, i, 1].mean())
+                for i in server_positions:
+                    mask = X_train[:, i, 2] == -1
+                    means[(i, -1)] = float(X_train[mask, i, 1].mean())
+                self.encoders_dict['handshake_means'] = means
+            else:
+                means = self.encoders_dict['handshake_means']
+
+            def apply_arr(arr):
+                arr = arr.copy()
+                for i in client_positions:
+                    mask = arr[:, i, 2] == 1
+                    arr[mask, i, 1] = means[(i, 1)]
+                for i in server_positions:
+                    mask = arr[:, i, 2] == -1
+                    arr[mask, i, 1] = means[(i, -1)]
+                return arr
+
+            X_train = apply_arr(X_train)
+            if X_test is not None:
+                return X_train, apply_arr(X_test)
+            return X_train
+
+        if fit:
+            means = {}
+            for i in client_positions:
+                mask = X_train[f'PPI_DIRS_{i}'] == 1
+                means[(i, 1)] = X_train.loc[mask, f'PPI_SIZES_{i}'].mean()
+            for i in server_positions:
+                mask = X_train[f'PPI_DIRS_{i}'] == -1
+                means[(i, -1)] = X_train.loc[mask, f'PPI_SIZES_{i}'].mean()
+            self.encoders_dict['handshake_means'] = means
+        else:
+            means = self.encoders_dict['handshake_means']
+
+        def apply(df):
+            df = df.copy()
+            for i in client_positions:
+                col = f'PPI_SIZES_{i}'
+                df.loc[df[f'PPI_DIRS_{i}'] == 1, col] = df[col].dtype.type(round(means[(i, 1)]))
+            for i in server_positions:
+                col = f'PPI_SIZES_{i}'
+                df.loc[df[f'PPI_DIRS_{i}'] == -1, col] = df[col].dtype.type(round(means[(i, -1)]))
+            return df
+
+        X_train = apply(X_train)
+        if X_test is not None:
+            return X_train, apply(X_test)
+        return X_train
+
     def build_sequence_features(self, X_train, X_test, seq_len=30, fit_scaler=True):
         def stack(df):
             times = df[[f'PPI_TIMES_{i}' for i in range(seq_len)]].values
@@ -162,6 +222,8 @@ class DatasetManipulation:
                 'X_test': X_test_scaled,
                 'seq_X_train': seq_X_train,
                 'seq_X_test': seq_X_test,
+                'raw_X_train': X_train if flags.get('ppi_sequence', False) else None,
+                'raw_X_test': X_test if flags.get('ppi_sequence', False) else None,
             }
 
         return variants, y_train, y_test
