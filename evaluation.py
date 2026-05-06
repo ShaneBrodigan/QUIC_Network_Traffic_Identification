@@ -59,3 +59,27 @@ class Evaluate_model:
         plt.tight_layout()
         plt.show()
         print("\n")
+
+    def get_feature_importance(self, model, feature_names, num=7, importance_type='gain'):
+        # LightGBM supports importance_type ('gain' or 'split')
+        # RandomForest only has .feature_importances_ (mean impurity decrease)
+        try:
+            importances = model.booster_.feature_importance(importance_type=importance_type)
+        except AttributeError:
+            importances = model.feature_importances_
+
+        feature_names = np.array(feature_names)
+        idx = np.argsort(importances)[-num:][::-1]
+        top_names = feature_names[idx]
+        top_scores = importances[idx]
+
+        print(f"------- {self.modelname} — Top {num} Features -------")
+        for name, score in zip(top_names, top_scores):
+            print(f"  {name:<30} {score:.4f}")
+
+        fig, ax = plt.subplots(figsize=(10, num * 0.4))
+        sns.barplot(x=top_scores, y=top_names, ax=ax, palette="Blues_r")
+        ax.set_title(f"{self.modelname} — Top {num} Feature Importances")
+        ax.set_xlabel("Importance")
+        plt.tight_layout()
+        plt.show()

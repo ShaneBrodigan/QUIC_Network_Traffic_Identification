@@ -227,3 +227,45 @@ class DatasetManipulation:
             }
 
         return variants, y_train, y_test
+
+    def prepare_predict_variants(self):
+        """
+        Build all feature variants for the full dataset without splitting.
+        Uses scalers already fitted on Week 1 (stored in encoders_dict).
+
+        Returns
+        -------
+        variants : dict
+            Keys are variant names (see VARIANT_FLAGS). Each value is a dict with:
+              - 'X' : scaled tabular DataFrame
+              - 'seq_X' : (n, 30, 3) numpy array, only if variant includes ppi_sequence; otherwise None.
+        y : pd.Series
+        """
+        all_features = (self.flow_features + self.endreason_features + self.phist_features +
+                        self.ppi_summary_features + self.ppi_sequence_features)
+        y = self.dataset['APP']
+        X_full = self.dataset[all_features]
+
+        variants = {}
+        for name, flags in self.VARIANT_FLAGS.items():
+            X, _ = self.dataset_filter(
+                X_full, X_full,
+                incl_flow_feats=flags.get('flow', False),
+                incl_phist_feats=flags.get('phist', False),
+                incl_endreason_feats=flags.get('endreason', False),
+                incl_ppi_summary_feats=flags.get('ppi_summary', False),
+                incl_ppi_sequence_feats=flags.get('ppi_sequence', False),
+            )
+
+            X_scaled, _ = self.scale_tabular_features(X, X, fit=False)
+
+            seq_X = None
+            if flags.get('ppi_sequence', False):
+                seq_X, _ = self.build_sequence_features(X, X, fit_scaler=False)
+
+            variants[name] = {
+                'X': X_scaled,
+                'seq_X': seq_X,
+            }
+
+        return variants, y
