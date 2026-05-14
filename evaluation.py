@@ -1,5 +1,5 @@
 import time
-from sklearn.metrics import f1_score, accuracy_score, classification_report, confusion_matrix
+from sklearn.metrics import f1_score, accuracy_score, classification_report, confusion_matrix, top_k_accuracy_score
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
@@ -46,19 +46,29 @@ class Evaluate_model:
             idx = np.argsort(per_class_f1)[:num]
             label = f"bottom {num} worst"
         cm      = confusion_matrix(self.y_true, self.y_pred, labels=idx)
-        cm_norm = cm.astype(float) / cm.sum(axis=1, keepdims=True)
+        row_sums = cm.sum(axis=1, keepdims=True)
+        row_sums[row_sums == 0] = 1
+        cm_norm = cm.astype(float) / row_sums
         tick_labels = [self.class_names[i] for i in idx] if self.class_names is not None else idx
 
-        fig, ax = plt.subplots(figsize=(18, 15))
+        fig, ax = plt.subplots(figsize=(10, 8))
         sns.heatmap(cm_norm, annot=True, fmt=".2f", cmap="Blues",
                     xticklabels=tick_labels, yticklabels=tick_labels, ax=ax)
         ax.set_xlabel("Predicted"); ax.set_ylabel("True")
         ax.set_title(f"{self.modelname} — Normalised Confusion Matrix ({label} performing classes by F1)")
-        plt.xticks(rotation=45, ha="right", fontsize=8)
-        plt.yticks(rotation=0, fontsize=8)
+        plt.xticks(rotation=45, ha="right", fontsize=10)
+        plt.yticks(rotation=0, fontsize=10)
         plt.tight_layout()
         plt.show()
         print("\n")
+
+    # Top-k accuracy. Pass a score matrix [n_samples, n_classes]:
+    def get_top_k_accuracy(self, y_score, ks=(1, 3, 5)):
+        labels = np.arange(y_score.shape[1])
+        print(f"------- {self.modelname} — Top-k Accuracy -------")
+        for k in ks:
+            score = top_k_accuracy_score(self.y_true, y_score, k=k, labels=labels)
+            print(f"  Top-{k}: {score:.4f}")
 
     def get_feature_importance(self, model, feature_names, num=7, importance_type='gain'):
         # LightGBM supports importance_type ('gain' or 'split')
